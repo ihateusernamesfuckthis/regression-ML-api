@@ -1,3 +1,4 @@
+from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import RandomizedSearchCV
@@ -5,7 +6,8 @@ import pandas as pd
 import joblib
 import json
 
-def train_random_forest (X_train, y_train, preprocessor):
+def train_random_forest (X_train, y_train, preprocessor, config):
+
 
     model = RandomForestRegressor(random_state=42)
 
@@ -41,21 +43,25 @@ def train_random_forest (X_train, y_train, preprocessor):
 
     best_model = random_search.best_estimator_
 
-    joblib.dump(best_model, "models/random_forest_v1.pkl")
+    model_path = Path(config["model_path"])
+    metadata_path = Path(config["metadata_path"])
+    metadata_path.parent.mkdir(exist_ok = True, parents = True)
+
+    joblib.dump(best_model, model_path)
 
     metadata = {
         "timestamp": str(pd.Timestamp.now()),
         "best_params": random_search.best_params_,
         "best_score": abs(random_search.best_score_),
-        "model_path": "models/random_forest_v1.pkl"
+        "model_path": str(model_path)
     }
 
-    with open("models/random_forest_v1_meta.json", "w") as f:
+    with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
 
-    print("Metadata og model gemt til models/random_forest_v1_meta.json")
+    print(f"Metadata og model gemt til {metadata_path}")
 
-    return best_model
+    return best_model, metadata
 
 
 
